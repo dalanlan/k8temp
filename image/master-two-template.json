@@ -1,0 +1,34 @@
+{
+    "apiVersion": "v1beta3",
+    "kind": "Pod",
+    "metadata": {
+        "name": "k8s-master"
+    },
+    "spec": {
+        "hostNetwork": true,
+        "containers": [
+            {
+                "name": "controller-manager",
+                "image": "wizardcxy/hyperkube:v0.18.2",
+                "command": [
+                    "/hyperkube",
+                    "controller-manager",
+                    "--master=PRIVATEIP:8080",
+                    "--machines=PRIVATEIP",
+                    "--sync_nodes=true",
+                    "--v=2"
+                ]
+            },
+            {
+                "name": "scheduler",
+                "image": "wizardcxy/hyperkube:v0.18.2",
+                "command": [
+                    "/hyperkube",
+                    "scheduler",
+                    "--master=PRIVATEIP:8080",
+                    "--v=2"
+                ]
+            }
+        ]
+    }
+}
