@@ -189,7 +189,10 @@ func main() {
 	apt-get install bridge-utils && brctl delbr docker0 && service docker restart
 	sleep 5
 	docker run --restart=on-failure:10 -itd -p 5000:5000 -v ${HOSTDIR}:/tmp/registry-dev wizardcxy/registry:2.0
+	if grep -Fxq "${PRIVATE_IP} ${USER}reg" /etc/hosts
+	then
 	echo "${PRIVATE_IP} ${USER}reg" | sudo tee -a /etc/hosts
+	fi
 	docker run --net=host --restart=on-failure:10 -itd -p 81:8081 -p 8082 liuyilun/gorouter
 	#start api server (attention to the certpath)
 	sudo docker load -i apiserver.tar
