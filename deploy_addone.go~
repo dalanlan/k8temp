@@ -270,7 +270,7 @@ loadpkg
 	fmt.Println("Installation done")
 	fmt.Println(string(res))
 
-	MASTER := "10.10.105.34"
+	MASTER := "10.10.103.34"
 
 	client := &http.Client{}
 
