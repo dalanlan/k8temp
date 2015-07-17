@@ -18,7 +18,7 @@ import (
 	"strings"
 )
 
-func login(user, pw, masterip, cacertLoc string) (bool, error) {
+func login(user, pw, masterip, cacertLoc, clustername string) (bool, error) {
 
 	if user == "" || pw == "" {
 
@@ -28,6 +28,10 @@ func login(user, pw, masterip, cacertLoc string) (bool, error) {
 
 	if masterip == "" {
 		return false, errors.New("please input the public master ip")
+	}
+
+	if clustername == "" {
+		return false, errors.New("please input the public cluster name")
 	}
 
 	caCertPath := cacertLoc // load ca file
@@ -42,6 +46,7 @@ func login(user, pw, masterip, cacertLoc string) (bool, error) {
 	//var clusterinfo = map[string]string{}
 	clusterinfo.Add("userName", user)
 	clusterinfo.Add("password", pw)
+	clusterinfo.Add("clusterName", clustername)
 	clusterinfo.Add("masterIp", masterip)
 	clusterinfo.Add("cacrt", string(caCrt))
 
@@ -69,7 +74,15 @@ func login(user, pw, masterip, cacertLoc string) (bool, error) {
 	body, _ := ioutil.ReadAll(resp.Body)
 	log.Println(string(body))
 
-	return resp.StatusCode == 200, nil
+	if resp.StatusCode == 400 {
+		return false, errors.New("cluster name auth fail")
+	}
+
+	if resp.StatusCode == 200 {
+		return true, nil
+	}
+
+	return false, errors.New("auth fail")
 }
 
 func checkMaster(ifac string) (string, error) {
@@ -142,11 +155,13 @@ func main() {
 	}
 
 	//get the username and password and net interface
-	var iface, pass, uname, publicip string
+	var iface, pass, uname, publicip, cluster string
 	flag.StringVar(&iface, "iface", "eth0", "input the net interface default eth0")
 	flag.StringVar(&pass, "p", "", "input the password")
 	flag.StringVar(&uname, "u", "", "input the username")
 	flag.StringVar(&publicip, "publicip", "", "input the public ip")
+	flag.StringVar(&cluster, "cluster", "", "input the cluster name")
+
 	//use flag?
 	certLoc := "cert/ca.crt"
 	flag.Parse()
@@ -162,7 +177,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	logcheck, err := login(userName, pw, masterpublicip, certLoc)
+	logcheck, err := login(userName, pw, masterpublicip, certLoc, cluster)
 
 	if !logcheck {
 		log.Println("installation fail :")
