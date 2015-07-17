@@ -12,3 +12,5 @@ masterip(private)
 combine the master , minion addone  deploy file into one binaries
 check the /etc/hosts before add the info into the file
 check if the cluster is installed
+create the cafile automatically
+check the service deployed ok before deploying the addone

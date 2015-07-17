@@ -99,6 +99,39 @@ func checkMaster(ifac string) (string, error) {
 	return masterip, nil
 
 }
+
+func createca(username string) error {
+	var genca = `
+	cd ./cert
+	rm *
+	openssl genrsa -out ca.key 2048
+
+    openssl req -x509 -new -nodes -key ca.key -subj "/CN=zju.com" -days 5000 -out ca.crt
+
+    openssl genrsa -out server.key 2048
+
+    openssl req -new -key server.key -subj "/CN=` + username + `" -out server.csr
+
+    openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days 5000
+	
+	touch tokens.csv
+	
+	echo "abcdTOKEN1234,zju,zju" > tokens.csv
+	
+	cd ..
+	
+	`
+	cmd := exec.Command("bash", "-c", genca)
+	res, err := cmd.Output()
+	if err != nil {
+		return errors.New("fail to create ca file , please installing openssl")
+	}
+
+	log.Println(string(res))
+
+	return nil
+}
+
 func main() {
 	//check current user is root or not
 	user, _ := user.Current()
@@ -122,7 +155,6 @@ func main() {
 	pw := pass
 	//todo get the masterip when checkuser
 	masterprivateip, err := checkMaster(iface)
-
 	masterpublicip := publicip
 	if err != nil {
 		log.Println("installation fail :")
@@ -146,6 +178,12 @@ func main() {
 	USER := string(userName)
 	PRIVATEIP := string(masterprivateip)
 	IFACE := string(iface)
+
+	err = createca(USER)
+	if err != nil {
+		log.Println("installation fail :")
+		log.Println(err.Error())
+	}
 
 	var startk8sScript = `start_k8s(){
 	K8S_VERSION=0.18.2
@@ -192,6 +230,8 @@ func main() {
 	docker run --restart=on-failure:10 -itd -p 5000:5000 -v ${HOSTDIR}:/tmp/registry-dev wizardcxy/registry:2.0
 	if grep -Fxq "${PRIVATE_IP} ${USER}reg" /etc/hosts
 	then
+	echo "modify /etc/hosts"
+	else
 	echo "${PRIVATE_IP} ${USER}reg" | sudo tee -a /etc/hosts
 	fi
 	docker run --net=host --restart=on-failure:10 -itd -p 81:8081 -p 8082 liuyilun/gorouter
@@ -211,7 +251,25 @@ func main() {
 	sleep 3
 	docker run -d --net=host --privileged wizardcxy/hyperkube:v${K8S_VERSION} /hyperkube proxy --master=http://${PRIVATE_IP}:8080 --v=2
 	# Start Monitor
-	./monitor.sh
+	sudo docker load -i ./tarpackage/monitserver.tar
+    sudo docker load -i ./tarpackage/cadvisor.tar
+
+    sleep 5
+
+    sudo docker run \
+      --volume=/:/rootfs:ro \
+      --volume=/var/run:/var/run:rw \
+      --volume=/sys:/sys:ro \
+      --volume=/var/lib/docker/:/var/lib/docker:ro \
+      --publish=4194:8080 \
+      --detach=true \
+    google/cadvisor:latest
+
+sleep 3
+
+    sudo docker run --net=host --privileged -d monitserver:latest
+
+    echo "Monitserver installation ok"
 	
 	
 	}
