@@ -85,7 +85,7 @@ func login(user, pw, masterip, cacertLoc, clustername string) (bool, error) {
 	return false, errors.New("auth fail")
 }
 
-func checkMaster(ifac string) (string, error) {
+func checkip(ifac string) (string, error) {
 	ifacobj, err := net.InterfaceByName(ifac)
 	if err != nil {
 		//log.Println(err.Error())
@@ -169,7 +169,7 @@ func main() {
 	userName := uname
 	pw := pass
 	//todo get the masterip when checkuser
-	masterprivateip, err := checkMaster(iface)
+	masterprivateip, err := checkip(iface)
 	masterpublicip := publicip
 	if err != nil {
 		log.Println("installation fail :")
@@ -206,9 +206,20 @@ func main() {
 	#PRIVATE_IP=10.168.14.145
 	PRIVATE_IP=` + PRIVATEIP + `
 	USER=` + USER + `
-	DOCKER_CONF="/etc/default/docker"
 	PRIVATE_PORT="5000"
 	IFACE=` + IFACE + `
+	lsb_dist="$(lsb_release -si)"
+	
+    case "$lsb_dist" in
+		fedora|centos)
+            DOCKER_CONF="/etc/sysconfig/docker"
+        ;;
+        ubuntu|debian|linuxmint)
+            DOCKER_CONF="/etc/default/docker"
+        ;;
+    esac
+	
+	
 	#CERT_PATH="/root/wangzhe/kube-in-docker/cert"
 	HOSTDIR="/mnt"
     LOCAL_PATH=$(pwd)
@@ -218,7 +229,7 @@ func main() {
 	sudo docker -H unix:///var/run/docker-bootstrap.sock load -i ./tarpackage/f.tar
 	sudo docker -H unix:///var/run/docker-bootstrap.sock load -i ./tarpackage/e.tar
 	
-	sudo docker load -i ./tarpackage/h.tar
+	sudo docker load -i ./tarpackage/hyperbase.tar
 	sudo docker load -i ./tarpackage/r.tar
 	sudo docker load -i ./tarpackage/p.tar
 	sudo docker load -i ./tarpackage/g.tar
@@ -240,7 +251,18 @@ func main() {
 	# use insecure docker DOCKER_CONF ???registry ? write where??
 	echo "DOCKER_OPTS=\"\$DOCKER_OPTS -H=unix:///var/run/docker.sock -H tcp://0.0.0.0:2376 --mtu=${FLANNEL_MTU} --bip=${FLANNEL_SUBNET} --insecure-registry=${USER}reg:${PRIVATE_PORT}\"" | sudo tee -a ${DOCKER_CONF}
 	ifconfig docker0 down
-	apt-get install bridge-utils && brctl delbr docker0 && service docker restart
+	
+	
+	case "$lsb_dist" in
+		fedora|centos)
+            yum install bridge-utils && brctl delbr docker0 && systemctl restart docker
+        ;;
+        ubuntu|debian|linuxmint)
+            apt-get install bridge-utils && brctl delbr docker0 && service docker restart
+        ;;
+    esac
+	
+	
 	sleep 5
 	docker run --restart=on-failure:10 -itd -p 5000:5000 -v ${HOSTDIR}:/tmp/registry-dev wizardcxy/registry:2.0
 	if grep -Fxq "${PRIVATE_IP} ${USER}reg" /etc/hosts
@@ -294,9 +316,8 @@ sleep 3
 	//Install master
 	log.Println("Installing master")
 
-	//cmd := exec.Command("bash", "-c", startk8sScript)
-	log.Println(startk8sScript)
-	cmd := exec.Command("bash", "-c", "echo ok")
+	cmd := exec.Command("bash", "-c", startk8sScript)
+
 	res, err := cmd.Output()
 	if err != nil {
 		log.Println(err)
