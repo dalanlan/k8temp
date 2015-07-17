@@ -14,4 +14,5 @@ check the /etc/hosts before add the info into the file
 check if the cluster is installed
 create the cafile automatically
 check the service deployed ok before deploying the addone
-different os 
+different os support
+cadvisor is not built in local version(v0.18.2) 

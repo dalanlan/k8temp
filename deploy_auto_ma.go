@@ -22,16 +22,16 @@ func login(user, pw, masterip, cacertLoc, clustername string) (bool, error) {
 
 	if user == "" || pw == "" {
 
-		return false, errors.New("please input the user name and password")
+		return false, errors.New("please input the user name and password use -h to get detail info")
 
 	}
 
 	if masterip == "" {
-		return false, errors.New("please input the public master ip")
+		return false, errors.New("please input the public master ip use -h to get detail info")
 	}
 
 	if clustername == "" {
-		return false, errors.New("please input the public cluster name")
+		return false, errors.New("please input the public cluster name use -h to get detail info")
 	}
 
 	caCertPath := cacertLoc // load ca file
@@ -46,7 +46,7 @@ func login(user, pw, masterip, cacertLoc, clustername string) (bool, error) {
 	//var clusterinfo = map[string]string{}
 	clusterinfo.Add("userName", user)
 	clusterinfo.Add("password", pw)
-	clusterinfo.Add("clusterName", clustername)
+	clusterinfo.Add("cloudName", clustername)
 	clusterinfo.Add("masterIp", masterip)
 	clusterinfo.Add("cacrt", string(caCrt))
 
@@ -60,7 +60,7 @@ func login(user, pw, masterip, cacertLoc, clustername string) (bool, error) {
 
 	client := &http.Client{Transport: tr}
 
-	url := "https://10.10.105.135:8443/user/checkAndUpdate"
+	url := "https://10.10.105.124:8443/user/checkAndUpdate"
 	reqest, err := http.NewRequest("POST", url, strings.NewReader(data))
 	reqest.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	reqest.Header.Set("Authorization", "qwertyuiopasdfghjklzxcvbnm1234567890")
@@ -294,9 +294,9 @@ sleep 3
 	//Install master
 	log.Println("Installing master")
 
-	cmd := exec.Command("bash", "-c", startk8sScript)
-	//log.Println(startk8sScript)
-	//cmd := exec.Command("bash", "-c", "echo ok")
+	//cmd := exec.Command("bash", "-c", startk8sScript)
+	log.Println(startk8sScript)
+	cmd := exec.Command("bash", "-c", "echo ok")
 	res, err := cmd.Output()
 	if err != nil {
 		log.Println(err)
