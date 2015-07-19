@@ -1,9 +1,11 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"os/exec"
 	"strings"
 )
@@ -259,6 +261,11 @@ func main() {
 loadpkg
 `
 
+	var MASTER = ""
+	flag.StringVar(&MASTER, "masterip", "", "input the master node ip (private)")
+
+	flag.Parse()
+
 	fmt.Println("load the tar file")
 	cmd := exec.Command("bash", "-c", loadScript)
 	//cmd := exec.Command("bash", "-c", "echo ok")
@@ -267,10 +274,13 @@ loadpkg
 		fmt.Println(err)
 		return
 	}
-	fmt.Println("Installation done")
+	fmt.Println("load operation done")
 	fmt.Println(string(res))
 
-	MASTER := "10.10.105.34"
+	if MASTER == "" {
+		fmt.Println("please input master ip")
+		os.Exit(1)
+	}
 
 	client := &http.Client{}
 
