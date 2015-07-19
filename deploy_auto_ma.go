@@ -210,6 +210,8 @@ func main() {
 	IFACE=` + IFACE + `
 	lsb_dist="$(lsb_release -si)"
 	
+	lsb_dist="$(echo "$lsb_dist" | tr '[:upper:]' '[:lower:]')"
+
     case "$lsb_dist" in
 		fedora|centos)
             DOCKER_CONF="/etc/sysconfig/docker"
