@@ -60,7 +60,8 @@ func login(user, pw, masterip, cacertLoc, clustername string) (bool, error) {
 
 	client := &http.Client{Transport: tr}
 
-	url := "https://10.10.105.124:8443/user/checkAndUpdate"
+	url := "https://183.129.190.82:9000/user/checkAndUpdate"
+	//url := "https://10.10.105.124:8443/user/checkAndUpdate"
 	reqest, err := http.NewRequest("POST", url, strings.NewReader(data))
 	reqest.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	reqest.Header.Set("Authorization", "qwertyuiopasdfghjklzxcvbnm1234567890")
@@ -102,8 +103,10 @@ func checkip(ifac string) (string, error) {
 	var masterip = ""
 	for _, ip := range addrarry {
 		IP := ip.String()
-		if strings.Contains(IP, "/24") {
-			masterip = strings.TrimSuffix(IP, "/24")
+		log.Println(IP)
+		//  the ipv4 may return xx.xx.xx.xx/2*
+		if strings.Contains(IP, "/") && !strings.Contains(IP, ":") {
+			masterip = strings.Split(IP, "/")[0]
 			log.Printf("the master ip is : %v \n", masterip)
 
 		}
@@ -113,7 +116,7 @@ func checkip(ifac string) (string, error) {
 
 }
 
-func createca(username string) error {
+func createca(username string, cluster string) error {
 	var genca = `
 	cd ./cert
 	rm *
@@ -123,7 +126,7 @@ func createca(username string) error {
 
     openssl genrsa -out server.key 2048
 
-    openssl req -new -key server.key -subj "/CN=` + username + `" -out server.csr
+    openssl req -new -key server.key -subj "/CN=` + cluster + "." + username + `" -out server.csr
 
     openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days 5000
 	
@@ -170,6 +173,7 @@ func main() {
 	pw := pass
 	//todo get the masterip when checkuser
 	masterprivateip, err := checkip(iface)
+	log.Println("private ip :", masterprivateip)
 	masterpublicip := publicip
 	if err != nil {
 		log.Println("installation fail :")
@@ -178,7 +182,8 @@ func main() {
 	}
 
 	logcheck, err := login(userName, pw, masterpublicip, certLoc, cluster)
-
+	log.Println(userName, pw, masterpublicip, certLoc, cluster)
+	//logcheck := true
 	if !logcheck {
 		log.Println("installation fail :")
 		if err != nil {
@@ -193,8 +198,8 @@ func main() {
 	USER := string(userName)
 	PRIVATEIP := string(masterprivateip)
 	IFACE := string(iface)
-
-	err = createca(USER)
+	//the cn of ca.crt is clustername.username
+	err = createca(USER, cluster)
 	if err != nil {
 		log.Println("installation fail :")
 		log.Println(err.Error())

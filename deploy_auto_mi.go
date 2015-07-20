@@ -28,9 +28,11 @@ func checkip(ifac string) (string, error) {
 	var masterip = ""
 	for _, ip := range addrarry {
 		IP := ip.String()
-		if strings.Contains(IP, "/24") {
-			masterip = strings.TrimSuffix(IP, "/24")
-			log.Printf("the master ip of %v is : %v \n", ifac, masterip)
+		log.Println(IP)
+		//  the ipv4 may return xx.xx.xx.xx/2*
+		if strings.Contains(IP, "/") && !strings.Contains(IP, ":") {
+			masterip = strings.Split(IP, "/")[0]
+			log.Printf("the master ip is : %v \n", masterip)
 
 		}
 	}

@@ -266,6 +266,11 @@ loadpkg
 
 	flag.Parse()
 
+	if MASTER == "" {
+		fmt.Println("please input master ip")
+		os.Exit(1)
+	}
+
 	fmt.Println("load the tar file")
 	cmd := exec.Command("bash", "-c", loadScript)
 	//cmd := exec.Command("bash", "-c", "echo ok")
@@ -276,11 +281,6 @@ loadpkg
 	}
 	fmt.Println("load operation done")
 	fmt.Println(string(res))
-
-	if MASTER == "" {
-		fmt.Println("please input master ip")
-		os.Exit(1)
-	}
 
 	client := &http.Client{}
 
