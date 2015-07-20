@@ -112,9 +112,12 @@ func main() {
 	
 	
 	sudo -b docker -d -H unix:///var/run/docker-bootstrap.sock -p /var/run/docker-bootstrap.pid --iptables=false --ip-masq=false --graph=/var/lib/docker-bootstrap 2> /var/log/docker-bootstrap.log 1> /dev/null
-	
 	sudo docker -H unix:///var/run/docker-bootstrap.sock load -i ./tarpackage/f.tar
 	sudo docker -H unix:///var/run/docker-bootstrap.sock load -i ./tarpackage/hyperbase.tar
+	//attention to load the pause image which is a part to assemble to a pod 
+	sudo docker load -i ./tarpackage/p.tar
+	sudo docker load -i ./tarpackage/appbase.tar
+
 
      
 	sleep 10
@@ -129,7 +132,7 @@ func main() {
 	source subnet.env
 
 	# configure docker net settings and registry, then restart it
-	echo "DOCKER_OPTS=\"\$DOCKER_OPTS --mtu=${FLANNEL_MTU} --bip=${FLANNEL_SUBNET} --insecure-registry ${USER}reg:5000\"" | sudo tee -a ${DOCKER_CONF}
+	echo "DOCKER_OPTS=\"\$DOCKER_OPTS --mtu=${FLANNEL_MTU} --bip=${FLANNEL_SUBNET} --insecure-registry=${USER}reg:5000\"" | sudo tee -a ${DOCKER_CONF}
 
 	ifconfig docker0 down
 
@@ -142,14 +145,14 @@ func main() {
         ;;
     esac
 
-	# sleep a little bit
+	# sleep a little set the /etc/hosts   masterip usernamereg
 	sleep 5
-
-	if grep -Fxq "${PRIVATE_IP} ${USER}reg" /etc/hosts
+   
+	if grep -Fxq "${MASTER_IP} ${USER}reg" /etc/hosts
 	then
 	echo "modify /etc/hosts"
 	else
-	echo "${PRIVATE_IP} ${USER}reg" | sudo tee -a /etc/hosts
+	echo "${MASTER_IP} ${USER}reg" | sudo tee -a /etc/hosts
 	fi
 
 	# Start minion
@@ -161,6 +164,12 @@ func main() {
 	sudo docker load -i ./tarpackage/monitserver.tar
     sudo docker load -i ./tarpackage/cadvisor.tar
 	
+	# Start gorouter
+	sudo docker load -i ./tarpackage/g.tar
+	sleep 1
+	docker run --net=host --restart=on-failure:10 -itd -p 80:8081 -p 8082 liuyilun/gorouter
+	
+	sleep 2
 	    sudo docker run \
       --volume=/:/rootfs:ro \
       --volume=/var/run:/var/run:rw \
@@ -172,7 +181,7 @@ func main() {
 
     sleep 3
 
-    sudo docker run --net=host --privileged -d monitserver:latest
+    sudo docker run --privileged=true --net=host  -d -v '/etc/ssl/certs:/etc/ssl/certs' monitserver:latest
 
     echo "Monitserver installation ok"
 

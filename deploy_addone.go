@@ -68,7 +68,7 @@ var DnsRcConfig = `
                     },
                     {
                         "args": [
-                            "-kube_master_url=http://10.10.103.224:8080",
+                            "-kube_master_url=http://10.168.14.145:8080",
                             "-domain=cluster.local"
                         ],
                         "image": "dalanlan/kube2sky:1.11",
@@ -210,7 +210,7 @@ var ApmRcConfig = `{
                 "containers": [
                     {
                         "name": "apm",
-                        "image": "xufei/apm-dc-master:v1",
+                        "image": "liuyang/apm-dc-master:v13",
                         "ports": [
                             {
                                 "containerPort": 6669,

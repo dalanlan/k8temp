@@ -242,8 +242,10 @@ func main() {
 	sudo docker load -i ./tarpackage/g.tar
 	sudo docker load -i ./tarpackage/b.tar
 	sudo docker load -i ./tarpackage/apiserver.tar
+	sudo docker load -i ./tarpackage/appbase.tar
+	
 	 # Start etcd
-	docker -H unix:///var/run/docker-bootstrap.sock run --net=host -d wizardcxy/etcd:2.0.9 /usr/local/bin/etcd --addr=${PRIVATE_IP}:4001 --bind-addr=0.0.0.0:4001 --data-dir=/var/etcd/data
+	docker -H unix:///var/run/docker-bootstrap.sock run --restart=on-failure:10 --net=host -d wizardcxy/etcd:2.0.9 /usr/local/bin/etcd --addr=${PRIVATE_IP}:4001 --bind-addr=0.0.0.0:4001 --data-dir=/var/etcd/data
 	sleep 5
 	# Set flannel net config
 	docker -H unix:///var/run/docker-bootstrap.sock run --net=host wizardcxy/etcd:2.0.9 etcdctl set /coreos.com/network/config '{ "Network": "10.1.0.0/16" }'
@@ -278,7 +280,7 @@ func main() {
 	else
 	echo "${PRIVATE_IP} ${USER}reg" | sudo tee -a /etc/hosts
 	fi
-	docker run --net=host --restart=on-failure:10 -itd -p 81:8081 -p 8082 liuyilun/gorouter
+	docker run --net=host --restart=on-failure:10 -itd -p 80:8081 -p 8082 liuyilun/gorouter
 	#start api server (attention to the certpath)
 	sudo docker load -i apiserver.tar
 	# using private ip to comunicate with 8080
@@ -311,7 +313,7 @@ func main() {
 
 sleep 3
 
-    sudo docker run --net=host --privileged -d monitserver:latest
+    sudo docker run --privileged=true --net=host  -d -v '/etc/ssl/certs:/etc/ssl/certs' monitserver:latest
 
     echo "Monitserver installation ok"
 	

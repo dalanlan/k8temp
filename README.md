@@ -9,6 +9,7 @@ deploy_addone
 masterip(private)
 
 ###Todo
+modify the tag of the baseimage into the usernamgreg:5000
 combine the master , minion addone  deploy file into one binaries
 check the /etc/hosts before add the info into the file
 check if the cluster is installed
