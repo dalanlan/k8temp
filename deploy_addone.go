@@ -10,7 +10,31 @@ import (
 	"strings"
 )
 
-var DnsRcConfig = `
+func main() {
+	loadScript := `loadpkg(){
+	#load the file
+	sudo docker load -i ./tarpackage/apm-dc-master.tar
+	sudo docker load -i ./tarpackage/dnsImage/dnsetcd.tar
+	sudo docker load -i ./tarpackage/dnsImage/dnsexec.tar
+	sudo docker load -i ./tarpackage/dnsImage/dnskube2sky.tar
+	sudo docker load -i ./tarpackage/dnsImage/dnsskydns.tar
+	sleep 3
+}
+loadpkg
+`
+
+	var MASTER = ""
+	flag.StringVar(&MASTER, "masterip", "", "input the master node ip (private)")
+
+	flag.Parse()
+
+	if MASTER == "" {
+		fmt.Println("please input master ip")
+		os.Exit(1)
+	}
+
+	//the json file to create se and pods
+	var DnsRcConfig = `
 {
     "apiVersion": "v1",
     "kind": "ReplicationController",
@@ -68,7 +92,7 @@ var DnsRcConfig = `
                     },
                     {
                         "args": [
-                            "-kube_master_url=http://10.168.14.145:8080",
+                            "-kube_master_url=http://` + MASTER + `:8080",
                             "-domain=cluster.local"
                         ],
                         "image": "dalanlan/kube2sky:1.11",
@@ -150,7 +174,7 @@ var DnsRcConfig = `
 }
 `
 
-var DnsSeConfig = `
+	var DnsSeConfig = `
 {
   "apiVersion": "v1",
   "kind": "Service",
@@ -185,7 +209,7 @@ var DnsSeConfig = `
 
 `
 
-var ApmRcConfig = `{
+	var ApmRcConfig = `{
     "kind": "ReplicationController",
     "apiVersion": "v1beta3",
     "metadata": {
@@ -224,7 +248,7 @@ var ApmRcConfig = `{
     }
 }`
 
-var ApmSeConfig = `{
+	var ApmSeConfig = `{
     "kind": "Service",
     "apiVersion": "v1beta3",
     "metadata": {
@@ -247,29 +271,6 @@ var ApmSeConfig = `{
         }
     }
 }`
-
-func main() {
-	loadScript := `loadpkg(){
-	#load the file
-	sudo docker load -i ./tarpackage/apm-dc-master.tar
-	sudo docker load -i ./tarpackage/dnsImage/dnsetcd.tar
-	sudo docker load -i ./tarpackage/dnsImage/dnsexec.tar
-	sudo docker load -i ./tarpackage/dnsImage/dnskube2sky.tar
-	sudo docker load -i ./tarpackage/dnsImage/dnsskydns.tar
-	sleep 3
-}
-loadpkg
-`
-
-	var MASTER = ""
-	flag.StringVar(&MASTER, "masterip", "", "input the master node ip (private)")
-
-	flag.Parse()
-
-	if MASTER == "" {
-		fmt.Println("please input master ip")
-		os.Exit(1)
-	}
 
 	fmt.Println("load the tar file")
 	cmd := exec.Command("bash", "-c", loadScript)
