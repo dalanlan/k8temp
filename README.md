@@ -16,4 +16,5 @@ check if the cluster is installed
 create the cafile automatically
 check the service deployed ok before deploying the addone
 different os support
-cadvisor is not built in local version(v0.18.2) 
+cadvisor is not built in local version(v0.18.2)
+modify the tag of base image at the end when the installation is finished 
